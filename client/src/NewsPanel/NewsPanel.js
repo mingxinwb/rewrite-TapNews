@@ -1,42 +1,42 @@
 import './NewsPanel.css';
 import React from 'react';
+import _ from 'lodash';
 import NewsCard from '../NewsCard/NewsCard';
 
 class NewsPanel extends React.Component {
     constructor() {
         super();
         this.state = {news: null};
+        this.handleScroll = this.handleScroll.bind(this);
     }
 
     componentDidMount() {
         this.loadMoreNews();
+        this.loadMoreNews = _.debounce(this.loadMoreNews, 5000);
+        window.addEventListener('scroll', this.handleScroll);
+    }
+
+    handleScroll() {
+        let scrollY = window.scrollY || window.pageYOffset 
+                      || document.documentElement.scrollTop;
+        if ((window.innerHeight + scrollY) >= (document.body.offsetHeight - 50)) {
+            console.log('Loading more news.');
+            this.loadMoreNews();
+        }
     }
 
     loadMoreNews() {
-        this.setState({
-            news: [
-                {
-                    'url': 'https://us.cnn.com/2018/07/13/entertainment/scarlett-johansson-film-exit/index.html',
-                    'title': "Scarlett Johansson won't play trans man in film after backlash",
-                    'description': "Scarlett Johansson has opted to withdraw from a film in which she was set to play a transgender man after her casting drew criticism from the LGBTQ community.",
-                    'source': 'cnn',
-                    'urlToImage': 'https://cdn.cnn.com/cnnnext/dam/assets/180713132237-scarlett-johansson-medium-tease.jpg',
-                    'digest': '3RjuEomJo2601syZbU70HA==\n',
-                    'reason': 'Recommend'
-                },
-                {
-                    'title': "Republicans praise Page's testimony one day after battle with Strzok",
-                    'description': "Former FBI lawyer Lisa Page was questioned behind closed doors on Friday.",
-                    'url': "https://us.cnn.com/2018/07/13/politics/lisa-page-interview-closed-doors/index.html", 
-                    'urlToImage': 'https://cdn.cnn.com/cnnnext/dam/assets/180713092148-01-lisa-page-0713-medium-tease.jpg',
-                    'source': 'cnn',
-                    'digest': '3RjuEomJo2601syZbUd0HA==\n',
-                    'reason': 'Hot',
-                    'time': 'Today'
+        // const news_url = 'http://' + window.location.host + '/news';
+        const news_url = 'http://' + window.location.hostname + ':3000' + '/news';
+        const request = new Request(news_url, {method: 'GET', cache: false});
 
-                }
-            ]
-        });
+        fetch(request)
+            .then((res) => res.json())
+            .then((news) => {
+                this.setState({
+                    news: this.state.news ? this.state.news.concat(news) : news,
+                });
+            })
     }
 
     renderNews() {
